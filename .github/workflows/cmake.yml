@@ -5,6 +5,8 @@ on:
     branches: [ master ]
     paths:
       - 'python/setup.py'
+  pulL_request:
+    branches: [ master ]
   workflow_dispatch:
 
 env:
