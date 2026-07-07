@@ -15,7 +15,7 @@ env:
 
 jobs:
   build_ubuntu_latest:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v7
@@ -27,7 +27,7 @@ jobs:
       
     - name: Configure CMake      
       working-directory: ./build_python
-      run: cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ../python
+      run: cmake -DCMAKE_CXX_FLAGS="-include cstdio" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ../python
 
     - name: Make
       working-directory: ./build_python    
