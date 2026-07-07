@@ -15,7 +15,7 @@ env:
 
 jobs:
   build_ubuntu_latest:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v7
@@ -44,7 +44,7 @@ jobs:
         path: ./install
     
   build_windows:
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
       - uses: actions/checkout@v7
@@ -76,7 +76,7 @@ jobs:
       
   build_wheel:
     needs: [build_ubuntu_latest, build_windows]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Download binary_ubuntu
