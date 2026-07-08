@@ -21,11 +21,13 @@ jobs:
         include:
           - artifact_name: ubuntu_amd_wheels
             runner: ubuntu-22.04
+            DCMAKE_CXX_FLAGS: '-DCMAKE_CXX_FLAGS="-include cstdio"'
           - artifact_name: ubuntu_arm_wheels
             runner: ubuntu-22.04-arm
+            DCMAKE_CXX_FLAGS: '-DCMAKE_CXX_FLAGS="-include cstdio"'
           - artifact_name: windows_wheels
             runner: windows-2022
-
+            DCMAKE_CXX_FLAGS: ''
     runs-on: ${{ matrix.runner }}
     
     steps:
@@ -37,7 +39,7 @@ jobs:
         
       - name: Configure CMake      
         working-directory: ./build_python
-        run: cmake -DCMAKE_CXX_FLAGS="-include cstdio" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ../python
+        run: cmake ${{ matrix.DCMAKE_CXX_FLAGS }} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ../python
 
       - name: Make
         working-directory: ./build_python    
