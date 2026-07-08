@@ -16,9 +16,9 @@ with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
 
 def get_package_data():
 	if os.name == 'nt':
-		fn_thrustrtc = 'PyThrustRTC.dll'
+		return 'PyThrustRTC.dll'
 	elif os.name == "posix":
-		fn_thrustrtc = 'libPyThrustRTC.so'
+		return 'libPyThrustRTC.so'
 
 if bdist_wheel is not None:
 	class bdist_wheel_platform_tag(bdist_wheel):
