@@ -18,30 +18,48 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-    - uses: actions/checkout@v7
-      with:    
-        submodules: true
-    
-    - name: Create Dir build_python
-      run: mkdir build_python
+      - uses: actions/checkout@v7
+        with:    
+          submodules: true
       
-    - name: Configure CMake      
-      working-directory: ./build_python
-      run: cmake -DCMAKE_CXX_FLAGS="-include cstdio" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ../python
+      - name: Create Dir build_python
+        run: mkdir build_python
+        
+      - name: Configure CMake      
+        working-directory: ./build_python
+        run: cmake -DCMAKE_CXX_FLAGS="-include cstdio" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ../python
 
-    - name: Make
-      working-directory: ./build_python    
-      run: make
+      - name: Make
+        working-directory: ./build_python    
+        run: make
+        
+      - name: Make Install
+        working-directory: ./build_python
+        run: make install
       
-    - name: Make Install
-      working-directory: ./build_python
-      run: make install
-    
-    - name: 'Upload Artifact'
-      uses: actions/upload-artifact@v7
-      with:
-        name: binary_ubuntu
-        path: ./install
+      - name: 'Upload Artifact'
+        uses: actions/upload-artifact@v7
+        with:
+          name: binary_ubuntu
+          path: ./install
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v6
+        with:
+            python-version: '3.8'
+
+      - name: Install dependencies
+        run: pip install setuptools wheel    
+       
+      - name: run setup.py
+        working-directory: ./test_python
+        run: python setup.py bdist_wheel
+        
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ubuntu_amd_wheels
+          path: ./test_python/dist/*.whl
 
   build_ubuntu_latest_arm:
       runs-on: ubuntu-22.04-arm
@@ -71,6 +89,23 @@ jobs:
         with:
           name: binary_ubuntu_arm
           path: ./install
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v6
+        with:
+            python-version: '3.8'
+
+      - name: Install dependencies
+        run: pip install setuptools wheel    
+       
+      - name: run setup.py
+        working-directory: ./test_python
+        run: python setup.py bdist_wheel
+        
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ubuntu_arm_wheels
+          path: ./test_python/dist/*.whl
 
   build_windows:
     runs-on: windows-2022
@@ -102,26 +137,6 @@ jobs:
         with:
           name: binary_windows
           path: ./install
-      
-  build_wheel:
-    needs: [build_ubuntu_latest,build_ubuntu_latest_arm,build_windows]
-    runs-on: ubuntu-22.04
-
-    steps:
-      - name: Download binary_ubuntu
-        uses: actions/download-artifact@v7
-        with:
-          name: binary_ubuntu
-
-      - name: Download binary_ubuntu_arm
-        uses: actions/download-artifact@v7
-        with:
-          name: binary_ubuntu_arm
-
-      - name: Download binary_windows
-        uses: actions/download-artifact@v7
-        with:
-          name: binary_windows          
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v6
@@ -138,5 +153,43 @@ jobs:
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v7
         with:
-          name: wheels
+          name: windows_wheels
           path: ./test_python/dist/*.whl
+
+  # build_wheel:
+  #   needs: [build_ubuntu_latest,build_ubuntu_latest_arm,build_windows]
+  #   runs-on: ubuntu-22.04
+
+  #   steps:
+  #     - name: Download binary_ubuntu
+  #       uses: actions/download-artifact@v7
+  #       with:
+  #         name: binary_ubuntu
+
+  #     - name: Download binary_ubuntu_arm
+  #       uses: actions/download-artifact@v7
+  #       with:
+  #         name: binary_ubuntu_arm
+
+  #     - name: Download binary_windows
+  #       uses: actions/download-artifact@v7
+  #       with:
+  #         name: binary_windows          
+
+  #     - name: Set up Python 3.8
+  #       uses: actions/setup-python@v6
+  #       with:
+  #           python-version: '3.8'
+
+  #     - name: Install dependencies
+  #       run: pip install setuptools wheel    
+       
+  #     - name: run setup.py
+  #       working-directory: ./test_python
+  #       run: python setup.py bdist_wheel
+        
+  #     - name: Upload wheel artifact
+  #       uses: actions/upload-artifact@v7
+  #       with:
+  #         name: wheels
+  #         path: ./test_python/dist/*.whl

@@ -14,6 +14,12 @@ here = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
+def get_package_data():
+	if os.name == 'nt':
+		fn_thrustrtc = 'PyThrustRTC.dll'
+	elif os.name == "posix":
+		fn_thrustrtc = 'libPyThrustRTC.so'
+
 if bdist_wheel is not None:
 	class bdist_wheel_platform_tag(bdist_wheel):
 		def finalize_options(self):
@@ -38,7 +44,7 @@ setup(
 	author_email='hyangfeih@gmail.com',
 	keywords='GPU CUDA Thrust',
 	packages=['ThrustRTC'],
-	package_data = { 'ThrustRTC': ['*.dll', '*.so']},
+	package_data = { 'ThrustRTC': get_package_data()},
 	install_requires = ['cffi','numpy'],	
 	cmdclass=cmdclass,
 )
