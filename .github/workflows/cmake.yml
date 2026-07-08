@@ -5,6 +5,9 @@ on:
     branches: [ master ]
     paths:
       - 'python/setup.py'
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -12,93 +15,81 @@ env:
 
 jobs:
   build_ubuntu_latest:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
-    - uses: actions/checkout@v2
-      with:    
-        submodules: true
-    
-    - name: Create Dir build_python
-      run: mkdir build_python
+      - uses: actions/checkout@v7
+        with:    
+          submodules: true
       
-    - name: Configure CMake      
-      working-directory: ./build_python
-      run: cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ../python
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v6
+        with:
+            python-version: '3.8'
 
-    - name: Make
-      working-directory: ./build_python    
-      run: make
+      - name: Install dependencies
+        run: pip install setuptools wheel    
+       
+      - name: run setup.py
+        working-directory: ./python
+        run: python setup.py bdist_wheel
+        
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ubuntu_amd_wheels
+          path: ./python/dist/*.whl
+
+  build_ubuntu_latest_arm:
+    runs-on: ubuntu-22.04-arm
+
+    steps:
+      - uses: actions/checkout@v7
+        with:    
+          submodules: true
       
-    - name: Make Install
-      working-directory: ./build_python
-      run: make install
-    
-    - name: 'Upload Artifact'
-      uses: actions/upload-artifact@v2
-      with:
-        name: binary_ubuntu
-        path: ./install
-    
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v6
+        with:
+            python-version: '3.8'
+
+      - name: Install dependencies
+        run: pip install setuptools wheel    
+       
+      - name: run setup.py
+        working-directory: ./python
+        run: python setup.py bdist_wheel
+        
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ubuntu_arm_wheels
+          path: ./python/dist/*.whl
+
   build_windows:
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7
         with:    
           submodules: true
           
       - uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Create Dir build_python
-        run: mkdir build_python
-        
-      - name: Configure CMake      
-        working-directory: ./build_python
-        run: cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ../python
-        
-      - name: Make
-        working-directory: ./build_python    
-        run: nmake
-
-      - name: Make Install
-        working-directory: ./build_python
-        run: nmake install        
-        
-      - name: 'Upload Artifact'
-        uses: actions/upload-artifact@v2
-        with:
-          name: binary_windows
-          path: ./install
-      
-  build_wheel:
-    needs: [build_ubuntu_latest, build_windows]
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Download binary_ubuntu
-        uses: actions/download-artifact@v2
-        with:
-          name: binary_ubuntu
-          
-      - name: Download binary_windows
-        uses: actions/download-artifact@v2
-        with:
-          name: binary_windows          
-
       - name: Set up Python 3.8
-        uses: actions/setup-python@v2
-          
+        uses: actions/setup-python@v6
+        with:
+            python-version: '3.8'
+
       - name: Install dependencies
-        run: pip install setuptools wheel twine    
+        run: pip install setuptools wheel    
        
       - name: run setup.py
-        working-directory: ./test_python
+        working-directory: ./python
         run: python setup.py bdist_wheel
         
-      - name: Twine upload
-        working-directory: ./test_python/dist
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: twine upload *.whl    
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows_wheels
+          path: ./python/dist/*.whl
