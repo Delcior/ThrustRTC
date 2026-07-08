@@ -14,14 +14,24 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-  build_ubuntu_latest:
-    runs-on: ubuntu-22.04
+  build_wheels:
+    stragegy:
+      fail-fast: false
+      matrix:
+        include:
+          - artifact_name: ubuntu_amd_wheels
+            runner: ubuntu-22.04
+          - artifact_name: ubuntu_arm_wheels
+            runner: ubuntu-22.04-arm
+          - artifact_name: windows_wheels
+            runner: windows-2022
 
+    runs-on: ${{ matrix.runner }}
+    
     steps:
       - uses: actions/checkout@v7
-        with:    
+        with:
           submodules: true
-      
       - name: Create Dir build_python
         run: mkdir build_python
         
@@ -36,160 +46,21 @@ jobs:
       - name: Make Install
         working-directory: ./build_python
         run: make install
-      
-      - name: 'Upload Artifact'
-        uses: actions/upload-artifact@v7
-        with:
-          name: binary_ubuntu
-          path: ./install
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v6
         with:
-            python-version: '3.8'
+          python-version: "3.8"
 
       - name: Install dependencies
-        run: pip install setuptools wheel    
-       
+        run: pip install setuptools wheel
+
       - name: run setup.py
-        working-directory: ./install/test_python
+        working-directory: ./python
         run: python setup.py bdist_wheel
-        
+
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v7
         with:
-          name: ubuntu_amd_wheels
-          path: ./install/test_python/dist/*.whl
-
-  build_ubuntu_latest_arm:
-      runs-on: ubuntu-22.04-arm
-
-      steps:
-      - uses: actions/checkout@v7
-        with:    
-          submodules: true
-      
-      - name: Create Dir build_python
-        run: mkdir build_python
-        
-      - name: Configure CMake      
-        working-directory: ./build_python
-        run: cmake -DCMAKE_CXX_FLAGS="-include cstdio" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ../python
-
-      - name: Make
-        working-directory: ./build_python    
-        run: make
-        
-      - name: Make Install
-        working-directory: ./build_python
-        run: make install
-      
-      - name: 'Upload Artifact'
-        uses: actions/upload-artifact@v7
-        with:
-          name: binary_ubuntu_arm
-          path: ./install
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v6
-        with:
-            python-version: '3.8'
-
-      - name: Install dependencies
-        run: pip install setuptools wheel    
-       
-      - name: run setup.py
-        working-directory: ./install/test_python
-        run: python setup.py bdist_wheel
-        
-      - name: Upload wheel artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: ubuntu_arm_wheels
-          path: ./install/test_python/dist/*.whl
-
-  build_windows:
-    runs-on: windows-2022
-
-    steps:
-      - uses: actions/checkout@v7
-        with:    
-          submodules: true
-          
-      - uses: ilammy/msvc-dev-cmd@v1
-
-      - name: Create Dir build_python
-        run: mkdir build_python
-        
-      - name: Configure CMake      
-        working-directory: ./build_python
-        run: cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ../python
-        
-      - name: Make
-        working-directory: ./build_python    
-        run: nmake
-
-      - name: Make Install
-        working-directory: ./build_python
-        run: nmake install        
-        
-      - name: 'Upload Artifact'
-        uses: actions/upload-artifact@v7
-        with:
-          name: binary_windows
-          path: ./install
-
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v6
-        with:
-            python-version: '3.8'
-
-      - name: Install dependencies
-        run: pip install setuptools wheel    
-       
-      - name: run setup.py
-        working-directory: ./install/test_python
-        run: python setup.py bdist_wheel
-        
-      - name: Upload wheel artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: windows_wheels
-          path: ./install/test_python/dist/*.whl
-
-  # build_wheel:
-  #   needs: [build_ubuntu_latest,build_ubuntu_latest_arm,build_windows]
-  #   runs-on: ubuntu-22.04
-
-  #   steps:
-  #     - name: Download binary_ubuntu
-  #       uses: actions/download-artifact@v7
-  #       with:
-  #         name: binary_ubuntu
-
-  #     - name: Download binary_ubuntu_arm
-  #       uses: actions/download-artifact@v7
-  #       with:
-  #         name: binary_ubuntu_arm
-
-  #     - name: Download binary_windows
-  #       uses: actions/download-artifact@v7
-  #       with:
-  #         name: binary_windows          
-
-  #     - name: Set up Python 3.8
-  #       uses: actions/setup-python@v6
-  #       with:
-  #           python-version: '3.8'
-
-  #     - name: Install dependencies
-  #       run: pip install setuptools wheel    
-       
-  #     - name: run setup.py
-  #       working-directory: ./test_python
-  #       run: python setup.py bdist_wheel
-        
-  #     - name: Upload wheel artifact
-  #       uses: actions/upload-artifact@v7
-  #       with:
-  #         name: wheels
-  #         path: ./test_python/dist/*.whl
+          name: ${{ matrix.artifact_name }}
+          path: ./python/dist/*.whl
