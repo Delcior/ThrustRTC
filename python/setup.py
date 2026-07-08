@@ -2,29 +2,29 @@ from setuptools import setup
 from codecs import open
 import os
 
-# cmdclass = {}
+cmdclass = {}
 
-# try:
-# 	from wheel.bdist_wheel import bdist_wheel
-# except ImportError:
-# 	bdist_wheel = None
+try:
+	from wheel.bdist_wheel import bdist_wheel
+except ImportError:
+	bdist_wheel = None
 
 here = os.path.abspath(os.path.dirname(__file__))
 
 with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-# if bdist_wheel is not None:
-# 	class bdist_wheel_platform_tag(bdist_wheel):
-# 		def finalize_options(self):
-# 			bdist_wheel.finalize_options(self)
-# 			self.root_is_pure = False
+if bdist_wheel is not None:
+	class bdist_wheel_platform_tag(bdist_wheel):
+		def finalize_options(self):
+			bdist_wheel.finalize_options(self)
+			self.root_is_pure = False
 
-# 		def get_tag(self):
-# 			_, _, plat = bdist_wheel.get_tag(self)
-# 			return 'py3', 'none', plat
+		def get_tag(self):
+			_, _, plat = bdist_wheel.get_tag(self)
+			return 'py3', 'none', plat
 
-#	cmdclass['bdist_wheel'] = bdist_wheel_platform_tag
+	cmdclass['bdist_wheel'] = bdist_wheel_platform_tag
 
 setup(
 	name = 'ThrustRTC',
@@ -40,5 +40,5 @@ setup(
 	packages=['ThrustRTC'],
 	package_data = { 'ThrustRTC': ['*.dll', '*.so']},
 	install_requires = ['cffi','numpy'],	
-#	cmdclass=cmdclass,
+	cmdclass=cmdclass,
 )
