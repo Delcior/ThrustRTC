@@ -21,16 +21,19 @@ jobs:
         include:
           - artifact_name: ubuntu_amd_wheels
             runner: ubuntu-22.04
-            make_flags: '-DCMAKE_CXX_FLAGS="-include cstdio"'
-            make_command: make
+            cmake_flags: '-DCMAKE_CXX_FLAGS="-include cstdio"'
+            build_command: cmake --build .
+            install_command: cmake --install .
           - artifact_name: ubuntu_arm_wheels
             runner: ubuntu-22.04-arm
-            make_flags: '-DCMAKE_CXX_FLAGS="-include cstdio"'
-            make_command: make
+            cmake_flags: '-DCMAKE_CXX_FLAGS="-include cstdio"'
+            build_command: cmake --build .
+            install_command: cmake --install .
           - artifact_name: windows_wheels
             runner: windows-2022
-            make_flags: '-G "NMake Makefiles"'
-            make_command: nmake
+            cmake_flags: '-G "NMake Makefiles"'
+            build_command: cmake --build . --config Release
+            install_command: cmake --install . --config Release
     runs-on: ${{ matrix.runner }}
     
     steps:
@@ -46,15 +49,15 @@ jobs:
         
       - name: Configure CMake      
         working-directory: ./build_python
-        run: cmake ${{ matrix.make_flags }} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ../python
+        run: cmake ${{ matrix.cmake_flags }} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ../python
   
-      - name: Make
+      - name: Build
         working-directory: ./build_python    
-        run: ${{ matrix.make_command }}
+        run: ${{ matrix.build_command }}
         
-      - name: Make Install
+      - name: Install
         working-directory: ./build_python
-        run: ${{ matrix.make_command }} install
+        run: ${{ matrix.install_command }}
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v6
