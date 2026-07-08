@@ -52,14 +52,14 @@ jobs:
         run: pip install setuptools wheel    
        
       - name: run setup.py
-        working-directory: ./build_python/install/test_python
+        working-directory: ./install/test_python
         run: python setup.py bdist_wheel
         
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v7
         with:
           name: ubuntu_amd_wheels
-          path: ./build_python/install/test_python/dist/*.whl
+          path: ./install/test_python/dist/*.whl
 
   build_ubuntu_latest_arm:
       runs-on: ubuntu-22.04-arm
@@ -98,14 +98,14 @@ jobs:
         run: pip install setuptools wheel    
        
       - name: run setup.py
-        working-directory: ./build_python/install/test_python
+        working-directory: ./install/test_python
         run: python setup.py bdist_wheel
         
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v7
         with:
           name: ubuntu_arm_wheels
-          path: ./build_python/install/test_python/dist/*.whl
+          path: ./install/test_python/dist/*.whl
 
   build_windows:
     runs-on: windows-2022
@@ -147,14 +147,14 @@ jobs:
         run: pip install setuptools wheel    
        
       - name: run setup.py
-        working-directory: ./build_python/install/test_python
+        working-directory: ./install/test_python
         run: python setup.py bdist_wheel
         
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v7
         with:
           name: windows_wheels
-          path: ./build_python/install/test_python/dist/*.whl
+          path: ./install/test_python/dist/*.whl
 
   # build_wheel:
   #   needs: [build_ubuntu_latest,build_ubuntu_latest_arm,build_windows]
