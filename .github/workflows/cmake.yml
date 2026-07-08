@@ -113,10 +113,20 @@ jobs:
         with:
           name: binary_ubuntu
 
+      - name: Inspect staged binaries
+        run: |
+          find . -name '*.so' -o -name '*.dll'
+          file ./test_python/ThrustRTC/libPyThrustRTC.so
+
       - name: Download binary_ubuntu
         uses: actions/download-artifact@v7
         with:
           name: binary_ubuntu_arm
+
+      - name: Inspect staged binaries
+        run: |
+          find . -name '*.so' -o -name '*.dll'
+          file ./test_python/ThrustRTC/libPyThrustRTC.so
 
       - name: Download binary_windows
         uses: actions/download-artifact@v7
