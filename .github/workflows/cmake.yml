@@ -5,100 +5,74 @@ on:
     branches: [ master ]
     paths:
       - 'python/setup.py'
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
 
 jobs:
-  build_ubuntu_latest:
-    runs-on: ubuntu-latest
-
+  build_wheels:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - artifact_name: ubuntu_amd_wheels
+            runner: ubuntu-22.04
+            cmake_flags: '-DCMAKE_CXX_FLAGS="-include cstdio"'
+            build_command: cmake --build .
+            install_command: cmake --install .
+          - artifact_name: ubuntu_arm_wheels
+            runner: ubuntu-22.04-arm
+            cmake_flags: '-DCMAKE_CXX_FLAGS="-include cstdio"'
+            build_command: cmake --build .
+            install_command: cmake --install .
+          - artifact_name: windows_wheels
+            runner: windows-2022
+            cmake_flags: '-G "NMake Makefiles"'
+            build_command: cmake --build . --config Release
+            install_command: cmake --install . --config Release
+    runs-on: ${{ matrix.runner }}
+    
     steps:
-    - uses: actions/checkout@v2
-      with:    
-        submodules: true
-    
-    - name: Create Dir build_python
-      run: mkdir build_python
-      
-    - name: Configure CMake      
-      working-directory: ./build_python
-      run: cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ../python
-
-    - name: Make
-      working-directory: ./build_python    
-      run: make
-      
-    - name: Make Install
-      working-directory: ./build_python
-      run: make install
-    
-    - name: 'Upload Artifact'
-      uses: actions/upload-artifact@v2
-      with:
-        name: binary_ubuntu
-        path: ./install
-    
-  build_windows:
-    runs-on: windows-latest
-
-    steps:
-      - uses: actions/checkout@v2
-        with:    
+      - uses: actions/checkout@v7
+        with:
           submodules: true
-          
+
       - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
 
       - name: Create Dir build_python
         run: mkdir build_python
         
       - name: Configure CMake      
         working-directory: ./build_python
-        run: cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ../python
-        
-      - name: Make
+        run: cmake ${{ matrix.cmake_flags }} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ../python
+  
+      - name: Build
         working-directory: ./build_python    
-        run: nmake
-
-      - name: Make Install
-        working-directory: ./build_python
-        run: nmake install        
+        run: ${{ matrix.build_command }}
         
-      - name: 'Upload Artifact'
-        uses: actions/upload-artifact@v2
-        with:
-          name: binary_windows
-          path: ./install
-      
-  build_wheel:
-    needs: [build_ubuntu_latest, build_windows]
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Download binary_ubuntu
-        uses: actions/download-artifact@v2
-        with:
-          name: binary_ubuntu
-          
-      - name: Download binary_windows
-        uses: actions/download-artifact@v2
-        with:
-          name: binary_windows          
+      - name: Install
+        working-directory: ./build_python
+        run: ${{ matrix.install_command }}
 
       - name: Set up Python 3.8
-        uses: actions/setup-python@v2
-          
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.8"
+
       - name: Install dependencies
-        run: pip install setuptools wheel twine    
-       
+        run: pip install setuptools wheel
+
       - name: run setup.py
-        working-directory: ./test_python
+        working-directory: ./install/test_python
         run: python setup.py bdist_wheel
-        
-      - name: Twine upload
-        working-directory: ./test_python/dist
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: twine upload *.whl    
+
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ./install/test_python/dist/*.whl
