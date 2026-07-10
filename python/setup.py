@@ -1,13 +1,9 @@
+from wheel.bdist_wheel import bdist_wheel
 from setuptools import setup
 from codecs import open
 import os
 
 cmdclass = {}
-
-try:
-	from wheel.bdist_wheel import bdist_wheel
-except ImportError:
-	bdist_wheel = None
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -20,17 +16,16 @@ def get_package_data():
 	elif os.name == "posix":
 		return ['libPyThrustRTC.so']
 
-if bdist_wheel is not None:
-	class bdist_wheel_platform_tag(bdist_wheel):
-		def finalize_options(self):
-			bdist_wheel.finalize_options(self)
-			self.root_is_pure = False
+class bdist_wheel_platform_tag(bdist_wheel):
+	def finalize_options(self):
+		bdist_wheel.finalize_options(self)
+		self.root_is_pure = False
 
-		def get_tag(self):
-			_, _, plat = bdist_wheel.get_tag(self)
-			return 'py3', 'none', plat
+	def get_tag(self):
+		_, _, platform = bdist_wheel.get_tag(self)
+		return 'py3', 'none', platform
 
-	cmdclass['bdist_wheel'] = bdist_wheel_platform_tag
+cmdclass['bdist_wheel'] = bdist_wheel_platform_tag
 
 setup(
 	name = 'ThrustRTC',
