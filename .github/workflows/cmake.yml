@@ -5,17 +5,27 @@ on:
     branches: [ master ]
     paths:
       - 'python/setup.py'
+  pull_request:
+    branches: [ master ]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
 
 jobs:
-  build_ubuntu_latest:
-    runs-on: ubuntu-latest
+  build_ubuntu:
+    strategy:
+        matrix:
+          include:
+            - runner: ubuntu-22.04
+              artifact_name: wheel_ubuntu
+            - runner: ubuntu-22.04-arm
+              artifact_name: wheel_ubuntu_arm
+
+    runs-on: ${{ matrix.runner }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v7
       with:    
         submodules: true
     
@@ -24,7 +34,7 @@ jobs:
       
     - name: Configure CMake      
       working-directory: ./build_python
-      run: cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ../python
+      run: cmake -DCMAKE_CXX_FLAGS="-include cstdio" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ../python
 
     - name: Make
       working-directory: ./build_python    
@@ -33,18 +43,31 @@ jobs:
     - name: Make Install
       working-directory: ./build_python
       run: make install
-    
-    - name: 'Upload Artifact'
-      uses: actions/upload-artifact@v2
+
+    - name: Set up Python 3.14
+      uses: actions/setup-python@v6
       with:
-        name: binary_ubuntu
-        path: ./install
+        python-version: 3.14
     
+    - name: Install dependencies
+      run: pip install setuptools wheel twine
+
+    - name: run setup.py
+      working-directory: ./install/test_python
+      run: python setup.py bdist_wheel
+
+    - name: Twine upload
+      working-directory: ./install/test_python/dist
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: twine upload *.whl    
+
   build_windows:
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7
         with:    
           submodules: true
           
@@ -64,40 +87,21 @@ jobs:
       - name: Make Install
         working-directory: ./build_python
         run: nmake install        
-        
-      - name: 'Upload Artifact'
-        uses: actions/upload-artifact@v2
-        with:
-          name: binary_windows
-          path: ./install
-      
-  build_wheel:
-    needs: [build_ubuntu_latest, build_windows]
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Download binary_ubuntu
-        uses: actions/download-artifact@v2
-        with:
-          name: binary_ubuntu
-          
-      - name: Download binary_windows
-        uses: actions/download-artifact@v2
-        with:
-          name: binary_windows          
 
       - name: Set up Python 3.8
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.8
           
       - name: Install dependencies
         run: pip install setuptools wheel twine    
        
       - name: run setup.py
-        working-directory: ./test_python
+        working-directory: ./install/test_python
         run: python setup.py bdist_wheel
-        
+
       - name: Twine upload
-        working-directory: ./test_python/dist
+        working-directory: ./install/test_python/dist
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
